@@ -1,0 +1,77 @@
+num_epochs = 1000
+steps_per_epoch = 1000
+patience = 30
+validate_every = 5
+
+best_val_recall = 0.0
+epochs_no_improve = 0
+
+epoch_history = []
+loss_history = []
+val_recall_history = []
+val_ndcg_history = []
+
+for epoch in range(num_epochs):
+    epoch_losses = []
+
+    for step in range(steps_per_epoch):
+        u, i_pos, i_neg = sampler()
+        u = tf.convert_to_tensor(u, dtype=tf.int32)
+        i_pos = tf.convert_to_tensor(i_pos, dtype=tf.int32)
+        i_neg = tf.convert_to_tensor(i_neg, dtype=tf.int32)
+
+        loss_value = train_step(model, u, i_pos, i_neg)
+
+        epoch_losses.append(loss_value.numpy())
+
+        # logowanie co jakiś tam krok w epokach
+        if (step + 1) % 100 == 0:
+            print(
+                f"Epoka {epoch:4d} | Krok {step+1:4d}/{steps_per_epoch} | "
+                f"Loss (ostatni batch): {loss_value.numpy():.4f}"
+            )
+
+    mean_epoch_loss = float(np.mean(epoch_losses))
+
+    # log: średni loss po epoce
+    print(f"[Epoka {epoch:4d}] Średni loss: {mean_epoch_loss:.4f}")
+
+    # walidacja co `validate_every` epok
+    if epoch % validate_every == 0:
+        val_recall, val_ndcg = evaluate_topk(
+            model,
+            user_pos_train=train_user_pos_items,
+            user_pos_eval=val_user_pos_items,
+            num_items=num_items,
+            K=20,
+        )
+
+        print(
+            f"[Epoka {epoch:4d}] "
+            f"Val Recall@20: {val_recall:.4f} | Val NDCG@20: {val_ndcg:.4f}"
+        )
+
+        # zapisz do historii
+        epoch_history.append(epoch)
+        loss_history.append(mean_epoch_loss)
+        val_recall_history.append(val_recall)
+        val_ndcg_history.append(val_ndcg)
+
+        # early stopping po Recall@20
+        if val_recall > best_val_recall:
+            best_val_recall = val_recall
+            epochs_no_improve = 0
+            print(f"[Epoka {epoch:4d}] Nowy najlepszy Recall@20: {best_val_recall:.4f}")
+        else:
+            epochs_no_improve += 1
+            print(
+                f"[Epoka {epoch:4d}] Brak poprawy, patience = "
+                f"{epochs_no_improve}/{patience}"
+            )
+
+        if epochs_no_improve >= patience:
+            print(
+                f"Early stopping: brak poprawy przez {patience} walidacji. "
+                f"Najlepszy Recall@20 = {best_val_recall:.4f}"
+            )
+            break
