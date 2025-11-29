@@ -1,77 +1,303 @@
-num_epochs = 1000
-steps_per_epoch = 1000
-patience = 30
-validate_every = 5
-
-best_val_recall = 0.0
-epochs_no_improve = 0
-
-epoch_history = []
-loss_history = []
-val_recall_history = []
-val_ndcg_history = []
-
-for epoch in range(num_epochs):
-    epoch_losses = []
-
-    for step in range(steps_per_epoch):
-        u, i_pos, i_neg = sampler()
-        u = tf.convert_to_tensor(u, dtype=tf.int32)
-        i_pos = tf.convert_to_tensor(i_pos, dtype=tf.int32)
-        i_neg = tf.convert_to_tensor(i_neg, dtype=tf.int32)
-
-        loss_value = train_step(model, u, i_pos, i_neg)
-
-        epoch_losses.append(loss_value.numpy())
-
-        # logowanie co jakiś tam krok w epokach
-        if (step + 1) % 100 == 0:
-            print(
-                f"Epoka {epoch:4d} | Krok {step+1:4d}/{steps_per_epoch} | "
-                f"Loss (ostatni batch): {loss_value.numpy():.4f}"
-            )
-
-    mean_epoch_loss = float(np.mean(epoch_losses))
-
-    # log: średni loss po epoce
-    print(f"[Epoka {epoch:4d}] Średni loss: {mean_epoch_loss:.4f}")
-
-    # walidacja co `validate_every` epok
-    if epoch % validate_every == 0:
-        val_recall, val_ndcg = evaluate_topk(
-            model,
-            user_pos_train=train_user_pos_items,
-            user_pos_eval=val_user_pos_items,
-            num_items=num_items,
-            K=20,
-        )
-
-        print(
-            f"[Epoka {epoch:4d}] "
-            f"Val Recall@20: {val_recall:.4f} | Val NDCG@20: {val_ndcg:.4f}"
-        )
-
-        # zapisz do historii
-        epoch_history.append(epoch)
-        loss_history.append(mean_epoch_loss)
-        val_recall_history.append(val_recall)
-        val_ndcg_history.append(val_ndcg)
-
-        # early stopping po Recall@20
-        if val_recall > best_val_recall:
-            best_val_recall = val_recall
-            epochs_no_improve = 0
-            print(f"[Epoka {epoch:4d}] Nowy najlepszy Recall@20: {best_val_recall:.4f}")
-        else:
-            epochs_no_improve += 1
-            print(
-                f"[Epoka {epoch:4d}] Brak poprawy, patience = "
-                f"{epochs_no_improve}/{patience}"
-            )
-
-        if epochs_no_improve >= patience:
-            print(
-                f"Early stopping: brak poprawy przez {patience} walidacji. "
-                f"Najlepszy Recall@20 = {best_val_recall:.4f}"
-            )
-            break
+Liczba interakcji: 727062
+Batch size: 2048
+Wyliczone steps_per_epoch: 356
+Epoka    0 | Krok  100/356 | Loss (ostatni batch): 0.6931
+Epoka    0 | Krok  200/356 | Loss (ostatni batch): 0.6931
+Epoka    0 | Krok  300/356 | Loss (ostatni batch): 0.6920
+[Epoka    0] Średni loss: 0.6925
+[Epoka    0] Val Recall@20: 0.0151 | Val NDCG@20: 0.0165
+[Epoka    0] Nowy najlepszy Recall@20: 0.0151
+Epoka    1 | Krok  100/356 | Loss (ostatni batch): 0.6507
+Epoka    1 | Krok  200/356 | Loss (ostatni batch): 0.5781
+Epoka    1 | Krok  300/356 | Loss (ostatni batch): 0.5095
+[Epoka    1] Średni loss: 0.5919
+[Epoka    1] Val Recall@20: 0.0156 | Val NDCG@20: 0.0173
+[Epoka    1] Nowy najlepszy Recall@20: 0.0156
+Epoka    2 | Krok  100/356 | Loss (ostatni batch): 0.4303
+Epoka    2 | Krok  200/356 | Loss (ostatni batch): 0.3959
+Epoka    2 | Krok  300/356 | Loss (ostatni batch): 0.3658
+[Epoka    2] Średni loss: 0.4047
+[Epoka    2] Val Recall@20: 0.0167 | Val NDCG@20: 0.0185
+[Epoka    2] Nowy najlepszy Recall@20: 0.0167
+Epoka    3 | Krok  100/356 | Loss (ostatni batch): 0.3271
+Epoka    3 | Krok  200/356 | Loss (ostatni batch): 0.3162
+Epoka    3 | Krok  300/356 | Loss (ostatni batch): 0.3048
+[Epoka    3] Średni loss: 0.3270
+[Epoka    3] Val Recall@20: 0.0174 | Val NDCG@20: 0.0194
+[Epoka    3] Nowy najlepszy Recall@20: 0.0174
+Epoka    4 | Krok  100/356 | Loss (ostatni batch): 0.3005
+Epoka    4 | Krok  200/356 | Loss (ostatni batch): 0.2878
+Epoka    4 | Krok  300/356 | Loss (ostatni batch): 0.2999
+[Epoka    4] Średni loss: 0.2896
+[Epoka    4] Val Recall@20: 0.0182 | Val NDCG@20: 0.0201
+[Epoka    4] Nowy najlepszy Recall@20: 0.0182
+Epoka    5 | Krok  100/356 | Loss (ostatni batch): 0.2797
+Epoka    5 | Krok  200/356 | Loss (ostatni batch): 0.2613
+Epoka    5 | Krok  300/356 | Loss (ostatni batch): 0.2586
+[Epoka    5] Średni loss: 0.2668
+[Epoka    5] Val Recall@20: 0.0183 | Val NDCG@20: 0.0204
+[Epoka    5] Nowy najlepszy Recall@20: 0.0183
+Epoka    6 | Krok  100/356 | Loss (ostatni batch): 0.2643
+Epoka    6 | Krok  200/356 | Loss (ostatni batch): 0.2577
+Epoka    6 | Krok  300/356 | Loss (ostatni batch): 0.2438
+[Epoka    6] Średni loss: 0.2510
+[Epoka    6] Val Recall@20: 0.0191 | Val NDCG@20: 0.0210
+[Epoka    6] Nowy najlepszy Recall@20: 0.0191
+Epoka    7 | Krok  100/356 | Loss (ostatni batch): 0.2465
+Epoka    7 | Krok  200/356 | Loss (ostatni batch): 0.2334
+Epoka    7 | Krok  300/356 | Loss (ostatni batch): 0.2290
+[Epoka    7] Średni loss: 0.2374
+[Epoka    7] Val Recall@20: 0.0194 | Val NDCG@20: 0.0212
+[Epoka    7] Nowy najlepszy Recall@20: 0.0194
+Epoka    8 | Krok  100/356 | Loss (ostatni batch): 0.2403
+Epoka    8 | Krok  200/356 | Loss (ostatni batch): 0.2129
+Epoka    8 | Krok  300/356 | Loss (ostatni batch): 0.2265
+[Epoka    8] Średni loss: 0.2258
+[Epoka    8] Val Recall@20: 0.0194 | Val NDCG@20: 0.0215
+[Epoka    8] Nowy najlepszy Recall@20: 0.0194
+Epoka    9 | Krok  100/356 | Loss (ostatni batch): 0.2046
+Epoka    9 | Krok  200/356 | Loss (ostatni batch): 0.1986
+Epoka    9 | Krok  300/356 | Loss (ostatni batch): 0.2011
+[Epoka    9] Średni loss: 0.2152
+[Epoka    9] Val Recall@20: 0.0197 | Val NDCG@20: 0.0218
+[Epoka    9] Nowy najlepszy Recall@20: 0.0197
+Epoka   10 | Krok  100/356 | Loss (ostatni batch): 0.2272
+Epoka   10 | Krok  200/356 | Loss (ostatni batch): 0.2005
+Epoka   10 | Krok  300/356 | Loss (ostatni batch): 0.2013
+[Epoka   10] Średni loss: 0.2070
+[Epoka   10] Val Recall@20: 0.0201 | Val NDCG@20: 0.0221
+[Epoka   10] Nowy najlepszy Recall@20: 0.0201
+Epoka   11 | Krok  100/356 | Loss (ostatni batch): 0.2038
+Epoka   11 | Krok  200/356 | Loss (ostatni batch): 0.2099
+Epoka   11 | Krok  300/356 | Loss (ostatni batch): 0.1871
+[Epoka   11] Średni loss: 0.1990
+[Epoka   11] Val Recall@20: 0.0204 | Val NDCG@20: 0.0224
+[Epoka   11] Nowy najlepszy Recall@20: 0.0204
+Epoka   12 | Krok  100/356 | Loss (ostatni batch): 0.1976
+Epoka   12 | Krok  200/356 | Loss (ostatni batch): 0.1855
+Epoka   12 | Krok  300/356 | Loss (ostatni batch): 0.1945
+[Epoka   12] Średni loss: 0.1914
+[Epoka   12] Val Recall@20: 0.0204 | Val NDCG@20: 0.0226
+[Epoka   12] Nowy najlepszy Recall@20: 0.0204
+Epoka   13 | Krok  100/356 | Loss (ostatni batch): 0.1876
+Epoka   13 | Krok  200/356 | Loss (ostatni batch): 0.1761
+Epoka   13 | Krok  300/356 | Loss (ostatni batch): 0.1832
+[Epoka   13] Średni loss: 0.1844
+[Epoka   13] Val Recall@20: 0.0211 | Val NDCG@20: 0.0232
+[Epoka   13] Nowy najlepszy Recall@20: 0.0211
+Epoka   14 | Krok  100/356 | Loss (ostatni batch): 0.1836
+Epoka   14 | Krok  200/356 | Loss (ostatni batch): 0.1691
+Epoka   14 | Krok  300/356 | Loss (ostatni batch): 0.1809
+[Epoka   14] Średni loss: 0.1784
+[Epoka   14] Val Recall@20: 0.0212 | Val NDCG@20: 0.0235
+[Epoka   14] Nowy najlepszy Recall@20: 0.0212
+Epoka   15 | Krok  100/356 | Loss (ostatni batch): 0.1728
+Epoka   15 | Krok  200/356 | Loss (ostatni batch): 0.1717
+Epoka   15 | Krok  300/356 | Loss (ostatni batch): 0.1767
+[Epoka   15] Średni loss: 0.1720
+[Epoka   15] Val Recall@20: 0.0217 | Val NDCG@20: 0.0239
+[Epoka   15] Nowy najlepszy Recall@20: 0.0217
+Epoka   16 | Krok  100/356 | Loss (ostatni batch): 0.1688
+Epoka   16 | Krok  200/356 | Loss (ostatni batch): 0.1812
+Epoka   16 | Krok  300/356 | Loss (ostatni batch): 0.1774
+[Epoka   16] Średni loss: 0.1664
+[Epoka   16] Val Recall@20: 0.0222 | Val NDCG@20: 0.0244
+[Epoka   16] Nowy najlepszy Recall@20: 0.0222
+Epoka   17 | Krok  100/356 | Loss (ostatni batch): 0.1668
+Epoka   17 | Krok  200/356 | Loss (ostatni batch): 0.1502
+Epoka   17 | Krok  300/356 | Loss (ostatni batch): 0.1380
+[Epoka   17] Średni loss: 0.1617
+[Epoka   17] Val Recall@20: 0.0227 | Val NDCG@20: 0.0249
+[Epoka   17] Nowy najlepszy Recall@20: 0.0227
+Epoka   18 | Krok  100/356 | Loss (ostatni batch): 0.1555
+Epoka   18 | Krok  200/356 | Loss (ostatni batch): 0.1541
+Epoka   18 | Krok  300/356 | Loss (ostatni batch): 0.1585
+[Epoka   18] Średni loss: 0.1567
+[Epoka   18] Val Recall@20: 0.0227 | Val NDCG@20: 0.0250
+[Epoka   18] Brak poprawy, patience = 1/10
+Epoka   19 | Krok  100/356 | Loss (ostatni batch): 0.1610
+Epoka   19 | Krok  200/356 | Loss (ostatni batch): 0.1474
+Epoka   19 | Krok  300/356 | Loss (ostatni batch): 0.1509
+[Epoka   19] Średni loss: 0.1521
+[Epoka   19] Val Recall@20: 0.0230 | Val NDCG@20: 0.0252
+[Epoka   19] Nowy najlepszy Recall@20: 0.0230
+Epoka   20 | Krok  100/356 | Loss (ostatni batch): 0.1677
+Epoka   20 | Krok  200/356 | Loss (ostatni batch): 0.1412
+Epoka   20 | Krok  300/356 | Loss (ostatni batch): 0.1420
+[Epoka   20] Średni loss: 0.1479
+[Epoka   20] Val Recall@20: 0.0234 | Val NDCG@20: 0.0257
+[Epoka   20] Nowy najlepszy Recall@20: 0.0234
+Epoka   21 | Krok  100/356 | Loss (ostatni batch): 0.1555
+Epoka   21 | Krok  200/356 | Loss (ostatni batch): 0.1452
+Epoka   21 | Krok  300/356 | Loss (ostatni batch): 0.1451
+[Epoka   21] Średni loss: 0.1435
+[Epoka   21] Val Recall@20: 0.0236 | Val NDCG@20: 0.0258
+[Epoka   21] Nowy najlepszy Recall@20: 0.0236
+Epoka   22 | Krok  100/356 | Loss (ostatni batch): 0.1425
+Epoka   22 | Krok  200/356 | Loss (ostatni batch): 0.1322
+Epoka   22 | Krok  300/356 | Loss (ostatni batch): 0.1434
+[Epoka   22] Średni loss: 0.1395
+[Epoka   22] Val Recall@20: 0.0239 | Val NDCG@20: 0.0261
+[Epoka   22] Nowy najlepszy Recall@20: 0.0239
+Epoka   23 | Krok  100/356 | Loss (ostatni batch): 0.1371
+Epoka   23 | Krok  200/356 | Loss (ostatni batch): 0.1273
+Epoka   23 | Krok  300/356 | Loss (ostatni batch): 0.1385
+[Epoka   23] Średni loss: 0.1359
+[Epoka   23] Val Recall@20: 0.0246 | Val NDCG@20: 0.0267
+[Epoka   23] Nowy najlepszy Recall@20: 0.0246
+Epoka   24 | Krok  100/356 | Loss (ostatni batch): 0.1326
+Epoka   24 | Krok  200/356 | Loss (ostatni batch): 0.1295
+Epoka   24 | Krok  300/356 | Loss (ostatni batch): 0.1484
+[Epoka   24] Średni loss: 0.1323
+[Epoka   24] Val Recall@20: 0.0250 | Val NDCG@20: 0.0270
+[Epoka   24] Nowy najlepszy Recall@20: 0.0250
+Epoka   25 | Krok  100/356 | Loss (ostatni batch): 0.1285
+Epoka   25 | Krok  200/356 | Loss (ostatni batch): 0.1274
+Epoka   25 | Krok  300/356 | Loss (ostatni batch): 0.1300
+[Epoka   25] Średni loss: 0.1293
+[Epoka   25] Val Recall@20: 0.0254 | Val NDCG@20: 0.0273
+[Epoka   25] Nowy najlepszy Recall@20: 0.0254
+Epoka   26 | Krok  100/356 | Loss (ostatni batch): 0.1257
+Epoka   26 | Krok  200/356 | Loss (ostatni batch): 0.1299
+Epoka   26 | Krok  300/356 | Loss (ostatni batch): 0.1172
+[Epoka   26] Średni loss: 0.1261
+[Epoka   26] Val Recall@20: 0.0255 | Val NDCG@20: 0.0275
+[Epoka   26] Nowy najlepszy Recall@20: 0.0255
+Epoka   27 | Krok  100/356 | Loss (ostatni batch): 0.1218
+Epoka   27 | Krok  200/356 | Loss (ostatni batch): 0.1125
+Epoka   27 | Krok  300/356 | Loss (ostatni batch): 0.1271
+[Epoka   27] Średni loss: 0.1234
+[Epoka   27] Val Recall@20: 0.0258 | Val NDCG@20: 0.0280
+[Epoka   27] Nowy najlepszy Recall@20: 0.0258
+Epoka   28 | Krok  100/356 | Loss (ostatni batch): 0.1257
+Epoka   28 | Krok  200/356 | Loss (ostatni batch): 0.1169
+Epoka   28 | Krok  300/356 | Loss (ostatni batch): 0.1144
+[Epoka   28] Średni loss: 0.1200
+[Epoka   28] Val Recall@20: 0.0262 | Val NDCG@20: 0.0281
+[Epoka   28] Nowy najlepszy Recall@20: 0.0262
+Epoka   29 | Krok  100/356 | Loss (ostatni batch): 0.1210
+Epoka   29 | Krok  200/356 | Loss (ostatni batch): 0.1164
+Epoka   29 | Krok  300/356 | Loss (ostatni batch): 0.1203
+[Epoka   29] Średni loss: 0.1181
+[Epoka   29] Val Recall@20: 0.0262 | Val NDCG@20: 0.0283
+[Epoka   29] Brak poprawy, patience = 1/10
+Epoka   30 | Krok  100/356 | Loss (ostatni batch): 0.1141
+Epoka   30 | Krok  200/356 | Loss (ostatni batch): 0.1106
+Epoka   30 | Krok  300/356 | Loss (ostatni batch): 0.1138
+[Epoka   30] Średni loss: 0.1151
+[Epoka   30] Val Recall@20: 0.0267 | Val NDCG@20: 0.0288
+[Epoka   30] Nowy najlepszy Recall@20: 0.0267
+Epoka   31 | Krok  100/356 | Loss (ostatni batch): 0.1099
+Epoka   31 | Krok  200/356 | Loss (ostatni batch): 0.1218
+Epoka   31 | Krok  300/356 | Loss (ostatni batch): 0.1202
+[Epoka   31] Średni loss: 0.1124
+[Epoka   31] Val Recall@20: 0.0267 | Val NDCG@20: 0.0289
+[Epoka   31] Brak poprawy, patience = 1/10
+Epoka   32 | Krok  100/356 | Loss (ostatni batch): 0.1125
+Epoka   32 | Krok  200/356 | Loss (ostatni batch): 0.0965
+Epoka   32 | Krok  300/356 | Loss (ostatni batch): 0.1007
+[Epoka   32] Średni loss: 0.1107
+[Epoka   32] Val Recall@20: 0.0268 | Val NDCG@20: 0.0290
+[Epoka   32] Nowy najlepszy Recall@20: 0.0268
+Epoka   33 | Krok  100/356 | Loss (ostatni batch): 0.1186
+Epoka   33 | Krok  200/356 | Loss (ostatni batch): 0.1101
+Epoka   33 | Krok  300/356 | Loss (ostatni batch): 0.1036
+[Epoka   33] Średni loss: 0.1082
+[Epoka   33] Val Recall@20: 0.0272 | Val NDCG@20: 0.0294
+[Epoka   33] Nowy najlepszy Recall@20: 0.0272
+Epoka   34 | Krok  100/356 | Loss (ostatni batch): 0.1088
+Epoka   34 | Krok  200/356 | Loss (ostatni batch): 0.1104
+Epoka   34 | Krok  300/356 | Loss (ostatni batch): 0.1067
+[Epoka   34] Średni loss: 0.1065
+[Epoka   34] Val Recall@20: 0.0275 | Val NDCG@20: 0.0298
+[Epoka   34] Nowy najlepszy Recall@20: 0.0275
+Epoka   35 | Krok  100/356 | Loss (ostatni batch): 0.1029
+Epoka   35 | Krok  200/356 | Loss (ostatni batch): 0.1040
+Epoka   35 | Krok  300/356 | Loss (ostatni batch): 0.1056
+[Epoka   35] Średni loss: 0.1041
+[Epoka   35] Val Recall@20: 0.0277 | Val NDCG@20: 0.0301
+[Epoka   35] Nowy najlepszy Recall@20: 0.0277
+Epoka   36 | Krok  100/356 | Loss (ostatni batch): 0.1037
+Epoka   36 | Krok  200/356 | Loss (ostatni batch): 0.1063
+Epoka   36 | Krok  300/356 | Loss (ostatni batch): 0.0946
+[Epoka   36] Średni loss: 0.1023
+[Epoka   36] Val Recall@20: 0.0279 | Val NDCG@20: 0.0304
+[Epoka   36] Nowy najlepszy Recall@20: 0.0279
+Epoka   37 | Krok  100/356 | Loss (ostatni batch): 0.0947
+Epoka   37 | Krok  200/356 | Loss (ostatni batch): 0.0932
+Epoka   37 | Krok  300/356 | Loss (ostatni batch): 0.0992
+[Epoka   37] Średni loss: 0.1003
+[Epoka   37] Val Recall@20: 0.0280 | Val NDCG@20: 0.0303
+[Epoka   37] Nowy najlepszy Recall@20: 0.0280
+Epoka   38 | Krok  100/356 | Loss (ostatni batch): 0.0947
+Epoka   38 | Krok  200/356 | Loss (ostatni batch): 0.0944
+Epoka   38 | Krok  300/356 | Loss (ostatni batch): 0.0993
+[Epoka   38] Średni loss: 0.0988
+[Epoka   38] Val Recall@20: 0.0286 | Val NDCG@20: 0.0307
+[Epoka   38] Nowy najlepszy Recall@20: 0.0286
+Epoka   39 | Krok  100/356 | Loss (ostatni batch): 0.0887
+Epoka   39 | Krok  200/356 | Loss (ostatni batch): 0.0850
+Epoka   39 | Krok  300/356 | Loss (ostatni batch): 0.0943
+[Epoka   39] Średni loss: 0.0967
+[Epoka   39] Val Recall@20: 0.0287 | Val NDCG@20: 0.0311
+[Epoka   39] Nowy najlepszy Recall@20: 0.0287
+Epoka   40 | Krok  100/356 | Loss (ostatni batch): 0.0929
+Epoka   40 | Krok  200/356 | Loss (ostatni batch): 0.0854
+Epoka   40 | Krok  300/356 | Loss (ostatni batch): 0.1017
+[Epoka   40] Średni loss: 0.0949
+[Epoka   40] Val Recall@20: 0.0288 | Val NDCG@20: 0.0313
+[Epoka   40] Nowy najlepszy Recall@20: 0.0288
+Epoka   41 | Krok  100/356 | Loss (ostatni batch): 0.0929
+Epoka   41 | Krok  200/356 | Loss (ostatni batch): 0.0958
+Epoka   41 | Krok  300/356 | Loss (ostatni batch): 0.1025
+[Epoka   41] Średni loss: 0.0942
+[Epoka   41] Val Recall@20: 0.0290 | Val NDCG@20: 0.0315
+[Epoka   41] Nowy najlepszy Recall@20: 0.0290
+Epoka   42 | Krok  100/356 | Loss (ostatni batch): 0.0977
+Epoka   42 | Krok  200/356 | Loss (ostatni batch): 0.0949
+Epoka   42 | Krok  300/356 | Loss (ostatni batch): 0.0957
+[Epoka   42] Średni loss: 0.0923
+[Epoka   42] Val Recall@20: 0.0295 | Val NDCG@20: 0.0320
+[Epoka   42] Nowy najlepszy Recall@20: 0.0295
+Epoka   43 | Krok  100/356 | Loss (ostatni batch): 0.0914
+Epoka   43 | Krok  200/356 | Loss (ostatni batch): 0.0918
+Epoka   43 | Krok  300/356 | Loss (ostatni batch): 0.0914
+[Epoka   43] Średni loss: 0.0910
+[Epoka   43] Val Recall@20: 0.0298 | Val NDCG@20: 0.0322
+[Epoka   43] Nowy najlepszy Recall@20: 0.0298
+Epoka   44 | Krok  100/356 | Loss (ostatni batch): 0.0854
+Epoka   44 | Krok  200/356 | Loss (ostatni batch): 0.0906
+Epoka   44 | Krok  300/356 | Loss (ostatni batch): 0.0958
+[Epoka   44] Średni loss: 0.0900
+[Epoka   44] Val Recall@20: 0.0298 | Val NDCG@20: 0.0322
+[Epoka   44] Brak poprawy, patience = 1/10
+Epoka   45 | Krok  100/356 | Loss (ostatni batch): 0.0792
+Epoka   45 | Krok  200/356 | Loss (ostatni batch): 0.0943
+Epoka   45 | Krok  300/356 | Loss (ostatni batch): 0.0812
+[Epoka   45] Średni loss: 0.0884
+[Epoka   45] Val Recall@20: 0.0297 | Val NDCG@20: 0.0323
+[Epoka   45] Brak poprawy, patience = 2/10
+Epoka   46 | Krok  100/356 | Loss (ostatni batch): 0.0863
+Epoka   46 | Krok  200/356 | Loss (ostatni batch): 0.0811
+Epoka   46 | Krok  300/356 | Loss (ostatni batch): 0.0856
+[Epoka   46] Średni loss: 0.0873
+[Epoka   46] Val Recall@20: 0.0303 | Val NDCG@20: 0.0328
+[Epoka   46] Nowy najlepszy Recall@20: 0.0303
+Epoka   47 | Krok  100/356 | Loss (ostatni batch): 0.1021
+Epoka   47 | Krok  200/356 | Loss (ostatni batch): 0.0897
+Epoka   47 | Krok  300/356 | Loss (ostatni batch): 0.1077
+[Epoka   47] Średni loss: 0.0858
+[Epoka   47] Val Recall@20: 0.0301 | Val NDCG@20: 0.0328
+[Epoka   47] Brak poprawy, patience = 1/10
+Epoka   48 | Krok  100/356 | Loss (ostatni batch): 0.0730
+Epoka   48 | Krok  200/356 | Loss (ostatni batch): 0.0949
+Epoka   48 | Krok  300/356 | Loss (ostatni batch): 0.0862
+[Epoka   48] Średni loss: 0.0851
+[Epoka   48] Val Recall@20: 0.0308 | Val NDCG@20: 0.0332
+[Epoka   48] Nowy najlepszy Recall@20: 0.0308
+Epoka   49 | Krok  100/356 | Loss (ostatni batch): 0.0859
+Epoka   49 | Krok  200/356 | Loss (ostatni batch): 0.0893
+Epoka   49 | Krok  300/356 | Loss (ostatni batch): 0.0893
+[Epoka   49] Średni loss: 0.0840
+[Epoka   49] Val Recall@20: 0.0307 | Val NDCG@20: 0.0333
+[Epoka   49] Brak poprawy, patience = 1/10
